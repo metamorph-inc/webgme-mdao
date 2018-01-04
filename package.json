@@ -18,9 +18,18 @@
     "webgme": "^2.0.0"
   },
   "devDependencies": {
+    "babel-core": "^6.26.0",
+    "babel-loader": "^7.1.2",
+    "chai": "^3.0.0",
     "mocha": "^2.2.5",
     "rimraf": "^2.4.0",
-    "chai": "^3.0.0"
+    "webpack": "^3.10.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "babel-preset-es2015": "^6.24.1",
+    "babel-preset-react": "^6.24.1",
+    "react": "^16.2.0",
+    "react-dom": "^16.2.0",
+    "webgme": "^2.0.0"
+  }
 }

@@ -7,13 +7,15 @@
 define([
     'js/PanelBase/PanelBaseWithHeader',
     'js/PanelManager/IActivePanel',
-    'widgets/Dataflow/DataflowWidget',
-    './DataflowControl'
+    '../../widgets/Dataflow/DataflowWidget',
+    './DataflowControl',
+    'react'
 ], function (
     PanelBaseWithHeader,
     IActivePanel,
     DataflowWidget,
-    DataflowControl
+    DataflowControl,
+    React
 ) {
     'use strict';
 
