@@ -1,0 +1,8 @@
+[
+  {
+    "id": "Dataflow",
+    "title": "Dataflow",
+    "panel": "panels/Dataflow/DataflowPanel",
+    "DEBUG_ONLY": false
+  }
+]

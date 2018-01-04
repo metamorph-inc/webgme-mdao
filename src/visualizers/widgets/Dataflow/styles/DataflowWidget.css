@@ -1,0 +1,52 @@
+/**
+ * This file is for any css that you may want for this visualizer.
+ *
+ * Ideally, you would use the scss file also provided in this directory
+ * and then generate this file automatically from that. However, you can
+ * simply write css if you prefer
+ */
+
+.dataflow {
+  outline: none;
+}
+
+.dataflow > .Component {
+    position: absolute;
+    /* top and left set in code */
+    width: 100px;
+    height: 62px;
+    border: 1px solid #000000;
+    background-color: #ECECEC;
+    padding: 3px;
+    text-align: center;
+
+    white-space: nowrap;
+    font-size: 11px;
+    font-weight: bold;
+    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+}
+
+.dataflow > .Dataflow {
+    position: absolute;
+    /* position set in code */
+    padding: 3px;
+    text-align: center;
+
+    white-space: nowrap;
+    font-size: 11px;
+    font-weight: bold;
+    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+
+}
+
+.dataflow > .Dataflow_backward {
+    border-width: 0 0 1px 1px;
+    border-style: solid;
+    border-color: #000000;
+}
+
+.dataflow > .Dataflow_forward {
+    border-width: 1px 1px 0 0;
+    border-style: solid;
+    border-color: #000000;
+}
