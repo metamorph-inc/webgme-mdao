@@ -10,7 +10,7 @@
   outline: none;
 }
 
-.dataflow > .Component {
+.dataflow .Component {
     position: absolute;
     /* top and left set in code */
     width: 100px;
