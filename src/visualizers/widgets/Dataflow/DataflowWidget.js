@@ -21,7 +21,7 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function () {
 
 
                   return <div className='Component' style={{ top: top + 'px', left: left + 'px' }} >
-                      name</div>
+                      {name}</div>
               }
           }
 
@@ -58,7 +58,6 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function () {
         this.nodes = {};
         this._initialize();
 
-        this.counter = 0;
         this.components = [];
         this.connections = {};
         this.newConnections = [];
@@ -95,12 +94,7 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function () {
         this.nodes[desc.id] = desc;
 
         if (desc && desc.type === 'Component') {
-            desc.top = 80 + this.counter * 100;
-            desc.left = 80 + this.counter * 100;
-            this.counter++;
             this.components.push(desc);
-
-            // node.onclick = this.onNodeClick.bind(this, desc.id);
         } else if (desc && desc.type === 'Dataflow') {
             this.newConnections.push(desc);
         }
@@ -116,64 +110,122 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function () {
     };
 
     DataflowWidget.prototype.territoryComplete = function () {
+        var counter = 0;
+        this.components.sort((a, b) => {
+          if (a.name < b.name) {
+            return -1;
+          }
+          if (a.name > b.name) {
+            return 1;
+          }
+          return 0;
+        });
+        this.components.forEach(component => {
+          component.top = 80 + counter * 100;
+          component.left = 80 + counter * 100;
+          counter++;
+        });
+
         var newConnections = this.newConnections;
         this.newConnections = [];
-        //newConnections
-        [].forEach(desc => {
-            var connection = this.connections[getConnectionsKey(desc)];
-            if (connection === undefined) {
-                connection = this.connections[getConnectionsKey(desc)] = {valueflows: []};
-                connection.element = document.createElement('div');
+        newConnections.forEach(this.updateConnection.bind(this));
 
-                connection.element.classList.add(desc.type);
-                var srcRect = this.nodes[getParentId(desc.srcId)].element.getBoundingClientRect();
-                var dstRect = this.nodes[getParentId(desc.dstId)].element.getBoundingClientRect();
-                var elRect = this._el.get(0).getBoundingClientRect();
-                if (srcRect.top < dstRect.top) {
-                    connection.element.classList.add('Dataflow_backward');
-                    connection.element.style.top = srcRect.bottom - elRect.top + 'px';
-                    connection.element.style.left = srcRect.left - elRect.left + 50 + 'px';
-                    connection.element.style.width = dstRect.left - srcRect.left - 50 + 'px';
-                    connection.element.style.height = dstRect.top - srcRect.top - 30 + 'px';
-                } else {
-                    connection.element.classList.add('Dataflow_forward');
-                    connection.element.style.top = dstRect.top - elRect.top + 50 + 'px';
-                    connection.element.style.left = dstRect.right - elRect.left + 'px';
-                    connection.element.style.width = srcRect.left - dstRect.left - 50 + 'px';
-                    connection.element.style.height = srcRect.top - dstRect.top - 50 + 'px';
-                }
-                this._el.append(connection.element);
-            }
-            this.nodes[desc.id].connection = connection;
-            connection.valueflows.push(desc);
+        Object.getOwnPropertyNames(this.nodes).forEach(nodesKey => {
+          var desc = this.nodes[nodesKey];
+          if (desc.type === "Dataflow") {
+            // FIXME update only connections whose endpoints changed
+            this.updateConnection(desc);
+          }
         });
-        this.app.setState({ components: this.components });
+
+        Object.getOwnPropertyNames(this.connections).forEach(connectionsKey => {
+            var connection = this.connections[connectionsKey];
+            var desc = connection.valueflows[0];
+            var srcRect = this.nodes[getParentId(desc.srcId)];
+            var dstRect = this.nodes[getParentId(desc.dstId)];
+            if (!srcRect || !dstRect) {
+              return;
+            }
+            if (srcRect.top < dstRect.top) {
+                connection.element.classList.add('Dataflow_backward');
+                connection.element.classList.remove('Dataflow_forward');
+                connection.element.style.top = srcRect.top + 62 + 'px';
+                connection.element.style.left = srcRect.left + 50 + 'px';
+                connection.element.style.width = dstRect.left - srcRect.left - 50 + 'px';
+                connection.element.style.height = dstRect.top - srcRect.top - 30 + 'px';
+            } else {
+                connection.element.classList.add('Dataflow_forward');
+                connection.element.classList.remove('Dataflow_backward');
+                connection.element.style.top = dstRect.top + 50 + 'px';
+                connection.element.style.left = dstRect.left + 100 + 'px';
+                connection.element.style.width = srcRect.left - dstRect.left - 50 + 'px';
+                connection.element.style.height = srcRect.top - dstRect.top - 50 + 'px';
+            }
+          });
+          this.app.setState({ components: this.components });
     };
 
     DataflowWidget.prototype.removeNode = function (gmeId) {
         var desc = this.nodes[gmeId];
         // this._el.append('<div>Removing node "' + desc.name + '"</div>');
-        if (desc.element) {
-            desc.element.remove();
-        }
         if (desc.connection) {
             var index = desc.connection.valueflows.indexOf(desc);
             desc.connection.valueflows.splice(index, 1);
             if (desc.connection.valueflows.length === 0) {
                 desc.connection.element.remove();
-                delete this.connections[getConnectionsKey(desc)];
+                delete this.connections[desc.connection.id];
             }
         }
+        var componentIndex = this.components.indexOf(desc);
+        if (componentIndex !== -1) {
+          this.components.splice(componentIndex, 1);
+
+        }
         delete this.nodes[gmeId];
+    };
+
+    DataflowWidget.prototype.updateConnection = function (desc) {
+      if (desc.connection && (!desc.srcId || !desc.dstId)) {
+        var index = desc.connection.valueflows.indexOf(desc);
+        if (index === -1) {
+          return;
+        }
+        desc.connection.valueflows.splice(index, 1);
+        if (desc.connection.valueflows.length === 0) {
+            desc.connection.element.remove();
+            delete this.connections[desc.connection.id];
+        }
+        delete desc.connection;
+      }
+      if (!desc.connection && (desc.srcId && desc.dstId)) {
+        var connection = this.connections[getConnectionsKey(desc)];
+        if (connection === undefined) {
+            connection = this.connections[getConnectionsKey(desc)] = {id: getConnectionsKey(desc), valueflows: []};
+            connection.element = document.createElement('div');
+
+            connection.element.classList.add(desc.type);
+            this._el.append(connection.element);
+        }
+        this.nodes[desc.id].connection = connection;
+        connection.valueflows.push(desc);
+        if (connection.valueflows.length > 5) throw Error();
+      }
+    }
+
+    // copy undefined values too (unlike JQuery)
+    function extend(dst, src) {
+      Object.getOwnPropertyNames(src).forEach(key => {
+        dst[key] = src[key];
+      });
     };
 
     DataflowWidget.prototype.updateNode = function (desc) {
         if (desc) {
             this._logger.debug('Updating node:', desc);
-            this.nodes[desc.id].name = desc.name;
-            desc = this.nodes[desc.id];
-            if (desc.element) {
-                desc.element.innerHTML = desc.name;
+            extend(this.nodes[desc.id], desc);
+            if (desc.type === "Dataflow") {
+              console.log(JSON.stringify(desc, (k, v) => { return  v === undefined ? null : v; }));
+              this.updateConnection(this.nodes[desc.id]);
             }
             // this._el.append('<div>Updating node "' + desc.name + '"</div>');
         }
