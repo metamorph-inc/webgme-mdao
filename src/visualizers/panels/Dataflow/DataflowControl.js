@@ -247,7 +247,7 @@ define([
                 self._logger.debug('Checkbox has been clicked!');
             }
         });
-        // this._toolbarItems.push(this.$cbShowConnection);
+        this._toolbarItems.push(this.$cbShowConnection);
 
         this._toolbarInitialized = true;
     };

@@ -13,18 +13,50 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function () {
 
 
     class Component extends React.Component {
+        constructor() {
+            super();
+            this.handleClick = this.handleClick.bind(this);
+        }
+
+        handleClick() {
+            this.props.dispatchEvent('inspect', {id: this.props.id, type: 'Component'});
+        }
+
          render() {
                   var _props = this.props,
                       name = _props.name,
                       top = _props.top,
                       left = _props.left;
 
-
-                  return <div className='Component' style={{ top: top + 'px', left: left + 'px' }} >
+                  return <div className='Component' style={{ top: top + 'px', left: left + 'px', zIndex: 2 }} onClick={this.handleClick}>
                       {name}</div>
               }
           }
 
+      class Connection extends React.Component {
+          constructor() {
+              super();
+              this.handleClick = this.handleClick.bind(this);
+          }
+
+          handleClick() {
+              this.props.dispatchEvent('inspect', {id: this.props.id, type: 'Connection'});
+          }
+
+          render() {
+            var {points} = this.props;
+            return <polyline xmlns="http://www.w3.org/2000/svg" points={points} markerEnd="url(#triangle)" stroke="black" strokeWidth="2" fill="none" onClick={this.handleClick}/>
+          }
+      }
+
+      class Inspector extends React.Component {
+          render() {
+              var {name} = this.props;
+              return <div className="inspector">
+                {name}
+              </div>;
+          }
+      }
 
       class App extends React.Component {
           constructor() {
@@ -32,18 +64,45 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function () {
               this.state = {
                   components: [
                       // { id: '/a/b/c', top: 100, left: 400, name: 'tst'}
-                  ]
+                  ],
+                  connections: [],
+                  dispatchEvent: () => {},
+                  inspectorHeight: 100,
+                  inspector: {}
               };
           }
 
           render() {
-                  var components = this.state.components;
+                  const {components, connections, dispatchEvent, width, height, inspectorHeight, inspector} = this.state;
 
-                  return (<div>
+                  const componentsHeight = components.map(c => { return c.top }).reduce((a, b) => { return Math.max(a,b) }, 0);
+
+                    // <div style={{width: '100%', height: components.map(c => { return c.top }).reduce((a, b) => { return Math.max(a,b) }, 0) + 200 + 'px' }}>
+                    // <div style={{width: '100%', height: 'calc(100% - 3em)'}}>
+                  return (
+                    <div style={{width, height}}>
+
+                    <div style={{width: '100%', height: `calc(100% - ${inspectorHeight}px)`, overflow: 'auto'}}>
+                    <div style={{width: '100%', height: componentsHeight + 150 + 'px', position: 'relative'}}>
                       { components.map(function (c) {
-                          return <Component key={c.id} top={c.top} left={c.left} name={c.name} />;
+                          return <Component key={c.id} id={c.id} top={c.top} left={c.left} name={c.name} dispatchEvent={dispatchEvent} />;
                       }) }
-                  </div>);
+                      <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" style={{position: "absolute", overflow: "unset"}}>
+                      <marker xmlns="http://www.w3.org/2000/svg" id="triangle" viewBox="0 0 10 10" refX="0" refY="5" markerUnits="strokeWidth" markerWidth="4" markerHeight="3" orient="auto">
+                          <path d="M 0 0 L 10 5 L 0 10 z"/>
+                      </marker>
+                      { connections.map(c => {
+                          return (
+                            <Connection key={c.id} id={c.id} points={c.points} dispatchEvent={dispatchEvent} />
+                          )
+                      })
+                      }
+                      </svg>
+                      </div>
+                      </div>
+                      <div style={{width: '100%', height: inspectorHeight + 'px', top: `calc(100% - ${inspectorHeight}px)`, position: 'absolute', backgroundColor: 'lightgrey'}}><Inspector {...inspector}/></div>
+                      </div>
+                    );
               }
           }
 
@@ -65,10 +124,6 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function () {
     };
 
     DataflowWidget.prototype._initialize = function () {
-        var width = this._el.width(),
-            height = this._el.height(),
-            self = this;
-
         // set widget class
         this._el.addClass(WIDGET_CLASS);
 
@@ -78,15 +133,23 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function () {
         // this._el.append('<h3>Dataflow Events:</h3>');
 
         // Registering to events can be done with jQuery (as normal)
-        this._el.on('dblclick', function (event) {
+        /*this._el.on('dblclick', event => {
             event.stopPropagation();
             event.preventDefault();
-            self.onBackgroundDblClick();
-        });
+            this.onBackgroundDblClick();
+        }); */
     };
 
     DataflowWidget.prototype.onWidgetContainerResize = function (width, height) {
         this._logger.debug('Widget is resizing...');
+
+        var state = this.app.state;
+        state.width = width;
+        state.height = height;
+        this.app.setState(state);
+    };
+
+    DataflowWidget.prototype.render = function () {
     };
 
     // Adding/Removing/Updating items
@@ -138,7 +201,7 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function () {
           }
         });
 
-        Object.getOwnPropertyNames(this.connections).forEach(connectionsKey => {
+        var connections = Object.getOwnPropertyNames(this.connections).map(connectionsKey => {
             var connection = this.connections[connectionsKey];
             var desc = connection.valueflows[0];
             var srcRect = this.nodes[getParentId(desc.srcId)];
@@ -146,23 +209,39 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function () {
             if (!srcRect || !dstRect) {
               return;
             }
+            var points;
             if (srcRect.top < dstRect.top) {
-                connection.element.classList.add('Dataflow_backward');
-                connection.element.classList.remove('Dataflow_forward');
-                connection.element.style.top = srcRect.top + 62 + 'px';
-                connection.element.style.left = srcRect.left + 50 + 'px';
-                connection.element.style.width = dstRect.left - srcRect.left - 50 + 'px';
-                connection.element.style.height = dstRect.top - srcRect.top - 30 + 'px';
+                var magic = 5; // FIXME: computed from Component border+padding+1
+                points = `${srcRect.left + 100} ${srcRect.top + 31} ${dstRect.left + 50} ${srcRect.top + 31} ${dstRect.left + 50} ${dstRect.top - magic}`;
             } else {
-                connection.element.classList.add('Dataflow_forward');
-                connection.element.classList.remove('Dataflow_backward');
-                connection.element.style.top = dstRect.top + 50 + 'px';
-                connection.element.style.left = dstRect.left + 100 + 'px';
-                connection.element.style.width = srcRect.left - dstRect.left - 50 + 'px';
-                connection.element.style.height = srcRect.top - dstRect.top - 50 + 'px';
+                var magic = 5; // FIXME: computed from Component border+padding+1
+                points = `${srcRect.left} ${srcRect.top + 31} ${dstRect.left + 50} ${srcRect.top + 31} ${dstRect.left + 50} ${dstRect.top + 62 + magic}`;
             }
-          });
-          this.app.setState({ components: this.components });
+            var id = connection.id;
+            return {id, points};
+        }).filter(connection => connection.points);
+          this.app.setState({ components: this.components,
+              connections: connections,
+              dispatchEvent: ((name, args) => {
+                  console.log(args);
+                  this.app.state.inspector = args;
+                  if (args.type === 'Component') {
+                      args.name = this.nodes[args.id].name;
+                  }
+                  if (args.type === 'Connection') {
+                      const connection = this.connections[args.id];
+                      args.valueflows = [];
+                      Object.getOwnPropertyNames(this.nodes).forEach((function (id) {
+                          const node = this.nodes[id];
+                          if (node.type === 'Dataflow' && connection.id === getConnectionsKey(node)) {
+                            //  throw Error();
+                            args.valueflows.append({name: node.name});
+                          }
+                      }).bind(this));
+                  }
+                  this.app.setState(this.app.state);
+              }).bind(this)
+            });
     };
 
     DataflowWidget.prototype.removeNode = function (gmeId) {
@@ -172,7 +251,6 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function () {
             var index = desc.connection.valueflows.indexOf(desc);
             desc.connection.valueflows.splice(index, 1);
             if (desc.connection.valueflows.length === 0) {
-                desc.connection.element.remove();
                 delete this.connections[desc.connection.id];
             }
         }
@@ -192,7 +270,6 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function () {
         }
         desc.connection.valueflows.splice(index, 1);
         if (desc.connection.valueflows.length === 0) {
-            desc.connection.element.remove();
             delete this.connections[desc.connection.id];
         }
         delete desc.connection;
@@ -201,14 +278,9 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function () {
         var connection = this.connections[getConnectionsKey(desc)];
         if (connection === undefined) {
             connection = this.connections[getConnectionsKey(desc)] = {id: getConnectionsKey(desc), valueflows: []};
-            connection.element = document.createElement('div');
-
-            connection.element.classList.add(desc.type);
-            this._el.append(connection.element);
         }
         this.nodes[desc.id].connection = connection;
         connection.valueflows.push(desc);
-        if (connection.valueflows.length > 5) throw Error();
       }
     }
 
@@ -224,7 +296,7 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function () {
             this._logger.debug('Updating node:', desc);
             extend(this.nodes[desc.id], desc);
             if (desc.type === "Dataflow") {
-              console.log(JSON.stringify(desc, (k, v) => { return  v === undefined ? null : v; }));
+              // console.log(JSON.stringify(desc, (k, v) => { return  v === undefined ? null : v; }));
               this.updateConnection(this.nodes[desc.id]);
             }
             // this._el.append('<div>Updating node "' + desc.name + '"</div>');

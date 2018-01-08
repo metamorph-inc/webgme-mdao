@@ -8,6 +8,8 @@
 
 .dataflow {
   outline: none;
+  padding: 0;
+  overflow: inherit !important;
 }
 
 .dataflow .Component {
