@@ -1,7 +1,7 @@
 # webgme-mdao
 ## Installation
 First, install the following:
-- [NodeJS](https://nodejs.org/en/) (v4.x.x recommended)
+- [NodeJS](https://nodejs.org/en/) (v8.9.x recommended)
 - [MongoDB](https://www.mongodb.com/)
 - webgme-cli: `npm install -g webgme-cli`
 
