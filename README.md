@@ -7,8 +7,8 @@ First, install the following:
 
 Second, start mongodb locally by running the `mongod` executable in your mongodb installation (you may need to create a `data` directory or set `--dbpath`).
 
-Then, run `webgme start` from the project root to start.
-
 Run `node node_modules\webpack\bin\webpack.js`
+
+Then, run `webgme start` from the project root to start.
 
 Navigate to `http://localhost:8888`
