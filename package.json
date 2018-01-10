@@ -28,6 +28,7 @@
   "dependencies": {
     "babel-preset-es2015": "^6.24.1",
     "babel-preset-react": "^6.24.1",
+    "jointjs": "^2.0.1",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
     "webgme": "^2.0.0"
