@@ -9,8 +9,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import joint from 'jointjs/index';
 
-define(['css!../../widgets/Dataflow/styles/DataflowWidget.css',
-        'css!jointjs/dist/joint.min.css'], function() {
+define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
     'use strict';
 
     class Component extends React.Component {
