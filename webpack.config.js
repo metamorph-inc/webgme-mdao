@@ -1,6 +1,7 @@
 var debug = process.env.NODE_ENV !== "production";
 var webpack = require('webpack');
 const path = require('path');
+const ExtractTextPlugin = require('extract-text-webpack-plugin');
 
 module.exports = {
   context: __dirname + '/src/visualizers',
@@ -15,13 +16,30 @@ module.exports = {
     new webpack.optimize.DedupePlugin(),
     new webpack.optimize.OccurenceOrderPlugin(),
     new webpack.optimize.UglifyJsPlugin({ mangle: false, sourcemap: false }),
+    new ExtractTextPlugin('./widgets/Dataflow/styles/DataflowWidget.css')
   ],
 
-module: {
-  rules: [
-    { test: /\.js$/, exclude: /node_modules/, loader: "babel-loader" }
-  ]
-},
+    module: {
+        rules: [
+            {
+                test: /\.js$/,
+                exclude: /node_modules/,
+                loader: "babel-loader"
+            },
+            {
+                test: /\.css$/,
+                use: ExtractTextPlugin.extract({
+                    fallback: 'style-loader',
+                    use: {
+                        loader: 'css-loader',
+                        options: {
+                            minimize: false
+                        }
+                    }
+                })
+            }
+        ]
+    },
 
 externals: {
   'js/NodePropertyNames': 'js/NodePropertyNames',
