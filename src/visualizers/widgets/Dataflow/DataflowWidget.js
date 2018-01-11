@@ -85,6 +85,19 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
                 inspectorHeight: 100,
                 inspector: {}
             };
+
+            this.graph = new joint.dia.Graph();
+            this.cells = [];
+        }
+
+        componentDidMount() {
+            const paper = new joint.dia.Paper({
+                el: ReactDOM.findDOMNode(this.refs.ggg),
+                width: 800,
+                height: 600,
+                gridSize: 1,
+                model: this.graph
+            });
         }
 
         render() {
@@ -98,11 +111,43 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
                 inspector
             } = this.state;
 
+            const graph = this.graph;
+
             const componentsHeight = components.map(c => {
                 return c.top
             }).reduce((a, b) => {
                 return Math.max(a, b)
             }, 0);
+
+            components.map(c => {
+                var textColor = textColor || "#000";
+
+                var cell = new joint.shapes.org.Member({
+                    position: {
+                        x: c.top,
+                        y: c.left
+                    },
+                    attrs: {
+                        '.card': {
+                            stroke: 'none',
+                            fill: '#30d0c6'
+                        },
+                        '.rank': {
+                            text: c.type,
+                            fill: textColor,
+                            'word-spacing': '-5px',
+                            'letter-spacing': 0
+                        },
+                        '.name': {
+                            text: c.name,
+                            fill: textColor,
+                            'font-size': 13,
+                            'font-family': 'Arial'
+                        }
+                    }
+                });
+                graph.addCell(cell);
+            });
 
             // <div style={{width: '100%', height: components.map(c => { return c.top }).reduce((a, b) => { return Math.max(a,b) }, 0) + 200 + 'px' }}>
             // <div style={{width: '100%', height: 'calc(100% - 3em)'}}>
@@ -116,30 +161,7 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
                         height: `calc(100% - ${inspectorHeight}px)`,
                         overflow: 'auto'
                     }}>
-                    <div style={{
-                            width: '100%',
-                            height: componentsHeight + 150 + 'px',
-                            position: 'relative'
-                        }}>
-                        {
-                            components.map(function(c) {
-                                return <Component key={c.id} id={c.id} top={c.top} left={c.left} name={c.name} dispatchEvent={dispatchEvent}/>;
-                            })
-                        }
-                        <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" style={{
-                                position: "absolute",
-                                overflow: "unset"
-                            }}>
-                            <marker xmlns="http://www.w3.org/2000/svg" id="triangle" viewBox="0 0 10 10" refX="0" refY="5" markerUnits="strokeWidth" markerWidth="4" markerHeight="3" orient="auto">
-                                <path d="M 0 0 L 10 5 L 0 10 z"/>
-                            </marker>
-                            {
-                                connections.map(c => {
-                                    return (<Connection key={c.id} id={c.id} points={c.points} dispatchEvent={dispatchEvent}/>)
-                                })
-                            }
-                        </svg>
-                    </div>
+                    <div ref="ggg"></div>
                 </div>
                 <div style={{
                         width: '100%',
