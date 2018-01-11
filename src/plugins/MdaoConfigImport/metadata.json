@@ -1,0 +1,24 @@
+{
+  "id": "MdaoConfigImport",
+  "name": "MdaoConfigImport",
+  "version": "0.1.0",
+  "description": "",
+  "icon": {
+    "class": "glyphicon glyphicon-cog",
+    "src": ""
+  },
+  "disableServerSideExecution": false,
+  "disableBrowserSideExecution": false,
+  "writeAccessRequired": false,
+  "configStructure": [
+    {
+      "name": "config_file",
+      "displayName": "mdao_config.json",
+      "description": "Use CyPhyPET to create this file",
+      "value": "",
+      "valueType": "asset",
+      "readOnly": false
+    }
+
+  ]
+}
