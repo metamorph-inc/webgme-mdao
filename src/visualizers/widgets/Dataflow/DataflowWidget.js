@@ -119,6 +119,8 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
                 return Math.max(a, b)
             }, 0);
 
+            var comp_to_cell = {};
+
             components.map(c => {
                 var textColor = textColor || "#000";
 
@@ -147,6 +149,19 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
                     }
                 });
                 graph.addCell(cell);
+
+                comp_to_cell[c] = cell;
+            });
+
+            connections.map(conn => {
+                // Who is the source? Who is the dest?
+                var conn_points = conn.id.split('__');
+
+                var id_src = conn_points[0],
+                    comp_src = 
+                    id_dst = conn_points[1];
+
+                console.log('hey');
             });
 
             // <div style={{width: '100%', height: components.map(c => { return c.top }).reduce((a, b) => { return Math.max(a,b) }, 0) + 200 + 'px' }}>
