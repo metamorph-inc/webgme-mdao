@@ -204,6 +204,7 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
         this.components = [];
         this.connections = {};
         this.newConnections = [];
+        this.dispatchEvent = this.dispatchEvent.bind(this);
         this._logger.debug('ctor finished');
     };
 
@@ -316,16 +317,18 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
             nodes: this.nodes,
             components: this.components,
             connections: mapById(connections),
-            dispatchEvent: ((name, args) => {
-                // console.log(args);
-                switch (name) {
-                    case 'inspect':
-                        this.app.state.inspector = args;
-                        this.app.setState(this.app.state);
-                }
-            }).bind(this)
+            dispatchEvent: this.dispatchEvent
         });
         this.app.setState(this.app.state);
+    };
+
+    DataflowWidget.prototype.dispatchEvent = function (name, args) {
+        // console.log(args);
+        switch (name) {
+            case 'inspect':
+                this.app.state.inspector = args;
+                this.app.setState(this.app.state);
+        }
     };
 
     DataflowWidget.prototype.removeNode = function(gmeId) {
