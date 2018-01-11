@@ -101,7 +101,8 @@ define([
                 parentId: node.getParentId(),
                 isConnection: GMEConcepts.isConnection(nodeId),
                 srcId: node.getOwnPointerId("src"),
-                dstId: node.getOwnPointerId("dst")
+                dstId: node.getOwnPointerId("dst"),
+                wrapper: node.getAttribute('package')
             };
         }
 

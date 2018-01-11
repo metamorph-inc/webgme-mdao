@@ -129,10 +129,11 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
         componentDidMount() {
             const paper = new joint.dia.Paper({
                 el: ReactDOM.findDOMNode(this.refs.ggg),
-                width: 800,
-                height: 600,
-                gridSize: 1,
-                model: this.graph
+                width: 1800,
+                height: 1600,
+                gridSize: 10,
+                model: this.graph,
+                interactive: false
             });
         }
 
@@ -149,6 +150,7 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
             } = this.state;
 
             const graph = this.graph;
+            graph.clear();
 
             const componentsHeight = components.map(c => {
                 return c.top
@@ -156,7 +158,16 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
                 return Math.max(a, b)
             }, 0);
 
-            var comp_to_cell = {};
+            var comp_id_to_cell = {};
+
+            var package_to_color = {
+                    'Python': '#75b4f6',
+                    'Excel': '#cccccc', //'#00592d',
+                    'CATIA': null,
+                    'PATRAN': null,
+                    'NASTRAN': null,
+                    'Matlab': '#f97a0f'
+                };
 
             components.map(c => {
                 var textColor = textColor || "#000";
@@ -169,10 +180,13 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
                     attrs: {
                         '.card': {
                             stroke: 'none',
-                            fill: '#30d0c6'
+                            fill: package_to_color[c.wrapper] || '#30d0c6',
+                        },
+                        image: {
+                            'xlink:href': '../../../extlib/images/' + c.wrapper.toLowerCase() + '.png'
                         },
                         '.rank': {
-                            text: c.type,
+                            text: c.wrapper,
                             fill: textColor,
                             'word-spacing': '-5px',
                             'letter-spacing': 0
@@ -187,40 +201,65 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
                 });
                 graph.addCell(cell);
 
-                comp_to_cell[c] = cell;
+                comp_id_to_cell[c.id] = cell;
             });
 
-            connections.map(conn => {
-                // Who is the source? Who is the dest?
-                var conn_points = conn.id.split('__');
+            Object.keys(connections).forEach(function (key) {
+                var id_parts = key.split('__'),
+                    id_src = id_parts[0],
+                    cell_src = comp_id_to_cell[id_src],
+                    id_dst = id_parts[1],
+                    cell_dst = comp_id_to_cell[id_dst];
 
-                var id_src = conn_points[0],
-                    comp_src = 
-                    id_dst = conn_points[1];
-
-                console.log('hey');
+                var wire = new joint.shapes.logic.Wire({
+                    source: {id: cell_src.id},
+                    target: {id: cell_dst.id},
+                    connector: {name: 'rounded'},
+                    router: {
+                        name: 'manhattan',
+                        args: {
+                            startDirections: ['left', 'right'],
+                            endDirections: ['top', 'bottom']
+                        }
+                    },
+                    attrs: {
+                        '.connection': {
+                            'fill': 'none'
+                        },
+                        '.connection-wrap': {
+                            'fill': 'none'
+                        },
+                        '.marker-target': {
+                            fill: 'black',
+                            d: 'M 10 0 L 0 5 L 10 10 z'
+                        }
+                    }
+                });
+                graph.addCell(wire);
             });
 
             // <div style={{width: '100%', height: components.map(c => { return c.top }).reduce((a, b) => { return Math.max(a,b) }, 0) + 200 + 'px' }}>
             // <div style={{width: '100%', height: 'calc(100% - 3em)'}}>
             return (<div style={{
-                    width,
-                    height
-                }}>
+                width,
+                height
+            }}>
 
                 <div style={{
-                        width: '100%',
-                        height: `calc(100% - ${inspectorHeight}px)`,
-                        overflow: 'auto'
-                    }}><div ref="ggg"></div>
+                    width: '100%',
+                    height: `calc(100% - ${inspectorHeight}px)`,
+                    overflow: 'auto'
+                }}>
+                    <div ref='ggg'></div>
                 </div>
                 <div style={{
-                        width: '100%',
-                        height: inspectorHeight + 'px',
-                        top: `calc(100% - ${inspectorHeight}px)`,
-                        position: 'absolute',
-                        backgroundColor: 'lightgrey'
-                    }}><Inspector id={inspector.id} type={inspector.type} components={components} connections={connections} nodes={nodes}/></div>
+                    width: '100%',
+                    height: inspectorHeight + 'px',
+                    top: `calc(100% - ${inspectorHeight}px)`,
+                    position: 'absolute',
+                    backgroundColor: 'lightgrey'
+                }}><Inspector id={inspector.id} type={inspector.type} components={components} connections={connections}
+                              nodes={nodes}/></div>
             </div>);
         }
     }
@@ -303,7 +342,7 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
             return 0;
         });
         this.components.forEach(component => {
-            component.top = 80 + counter * 100;
+            component.top = 80 + counter * 125;
             component.left = 80 + counter * 100;
             counter++;
         });
