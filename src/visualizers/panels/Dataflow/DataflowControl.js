@@ -140,6 +140,10 @@ define([
 
     DataflowControl.prototype._onLoad = function (gmeId) {
         var description = this._getObjectDescriptor(gmeId);
+        if (description.type === 'Component') {
+            this._selfPatterns[gmeId] = {children: 1};
+            this._client.updateTerritory(this._territoryId, this._selfPatterns);
+        }
         this._widget.addNode(description);
     };
 

@@ -62,14 +62,49 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
         }
     }
 
+    class InspectorConnection extends React.Component {
+        render() {
+            const {
+                id,
+                nodes,
+                connections,
+            } = this.props;
+            const valueflows = connections[id].valueflows;
+            return (<div>{ (valueflows || []).map(vf => {
+                var srcPort = nodes[vf.srcId];
+                var dstPort = nodes[vf.dstId];
+                var src = srcPort ? nodes[srcPort.parentId] : undefined;
+                var dst = dstPort ? nodes[dstPort.parentId] : undefined;
+                return <div key={vf.id}>{src.name}.{srcPort.name} {dst.name}.{dstPort.name}</div>; })
+            }</div>);
+        }
+    }
+
+    class InspectorComponent extends React.Component {
+        render() {
+            const {
+                nodes,
+                id
+            } = this.props;
+            const name = nodes[id].name;
+            return <div>{name}</div>;
+        }
+    }
+
     class Inspector extends React.Component {
         render() {
             var {
-                name
+                type,
             } = this.props;
-            return <div className="inspector">
-                {name}
-            </div>;
+            const props = this.props;
+            switch (type) {
+                case 'Connection':
+                    return (<InspectorConnection {...props}/>)
+                case 'Component':
+                    return (<InspectorComponent {...props}/>);
+                default:
+                    return <div/>;
+            }
         }
     }
 
@@ -80,10 +115,11 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
                 components: [
                     // { id: '/a/b/c', top: 100, left: 400, name: 'tst'}
                 ],
-                connections: [],
                 dispatchEvent: () => {},
                 inspectorHeight: 100,
-                inspector: {}
+                inspector: {},
+                nodes: {},
+                connections: {}
             };
 
             this.graph = new joint.dia.Graph();
@@ -102,6 +138,7 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
 
         render() {
             const {
+                nodes,
                 components,
                 connections,
                 dispatchEvent,
@@ -175,8 +212,7 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
                         width: '100%',
                         height: `calc(100% - ${inspectorHeight}px)`,
                         overflow: 'auto'
-                    }}>
-                    <div ref="ggg"></div>
+                    }}><div ref="ggg"></div>
                 </div>
                 <div style={{
                         width: '100%',
@@ -184,7 +220,7 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
                         top: `calc(100% - ${inspectorHeight}px)`,
                         position: 'absolute',
                         backgroundColor: 'lightgrey'
-                    }}><Inspector {...inspector}/></div>
+                    }}><Inspector id={inspector.id} type={inspector.type} components={components} connections={connections} nodes={nodes}/></div>
             </div>);
         }
     }
@@ -203,6 +239,7 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
         this.components = [];
         this.connections = {};
         this.newConnections = [];
+        this.dispatchEvent = this.dispatchEvent.bind(this);
         this._logger.debug('ctor finished');
     };
 
@@ -283,6 +320,13 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
             }
         });
 
+        const mapById = arr => {
+            return arr.reduce(function(map, obj) {
+                map[obj.id] = obj;
+                return map;
+            }, {});
+        };
+
         var connections = Object.getOwnPropertyNames(this.connections).map(connectionsKey => {
             var connection = this.connections[connectionsKey];
             var desc = connection.valueflows[0];
@@ -299,32 +343,27 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
                 var magic = 5; // FIXME: computed from Component border+padding+1
                 points = `${srcRect.left} ${srcRect.top + 31} ${dstRect.left + 50} ${srcRect.top + 31} ${dstRect.left + 50} ${dstRect.top + 62 + magic}`;
             }
-            var id = connection.id;
-            return {id, points};
-        }).filter(connection => connection.points);
-        this.app.setState({
+            var ret = {};
+            extend(ret, connection);
+            ret.points = points;
+            return ret;
+        }).filter(connection => connection && connection.points);
+        extend(this.app.state, {
+            nodes: this.nodes,
             components: this.components,
-            connections: connections,
-            dispatchEvent: ((name, args) => {
-                console.log(args);
-                this.app.state.inspector = args;
-                if (args.type === 'Component') {
-                    args.name = this.nodes[args.id].name;
-                }
-                if (args.type === 'Connection') {
-                    const connection = this.connections[args.id];
-                    args.valueflows = [];
-                    Object.getOwnPropertyNames(this.nodes).forEach((function(id) {
-                        const node = this.nodes[id];
-                        if (node.type === 'Dataflow' && connection.id === getConnectionsKey(node)) {
-                            //  throw Error();
-                            args.valueflows.append({name: node.name});
-                        }
-                    }).bind(this));
-                }
-                this.app.setState(this.app.state);
-            }).bind(this)
+            connections: mapById(connections),
+            dispatchEvent: this.dispatchEvent
         });
+        this.app.setState(this.app.state);
+    };
+
+    DataflowWidget.prototype.dispatchEvent = function (name, args) {
+        // console.log(args);
+        switch (name) {
+            case 'inspect':
+                this.app.state.inspector = args;
+                this.app.setState(this.app.state);
+        }
     };
 
     DataflowWidget.prototype.removeNode = function(gmeId) {
