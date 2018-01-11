@@ -163,9 +163,9 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
             var package_to_color = {
                     'Python': '#75b4f6',
                     'Excel': '#cccccc', //'#00592d',
-                    'CATIA': null,
-                    'PATRAN': null,
-                    'NASTRAN': null,
+                    'CATIA': '#cccccc',
+                    'PATRAN': '#cccccc',
+                    'NASTRAN': '#cccccc',
                     'Matlab': '#f97a0f'
                 };
 
