@@ -11,7 +11,7 @@ import ReactDOM from 'react-dom';
 define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
     'use strict';
 
-    class Component extends React.Component {
+    class Component extends React.PureComponent {
         constructor() {
             super();
             this.handleClick = this.handleClick.bind(this);
@@ -40,7 +40,7 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
         }
     }
 
-    class Connection extends React.Component {
+    class Connection extends React.PureComponent {
         constructor() {
             super();
             this.handleClick = this.handleClick.bind(this);
@@ -228,10 +228,10 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
     DataflowWidget.prototype.onWidgetContainerResize = function(width, height) {
         this._logger.debug('Widget is resizing...');
 
-        var state = this.app.state;
-        state.width = width;
-        state.height = height;
-        this.app.setState(state);
+        this.app.setState({
+          ...this.app.state,
+          width,
+          height});
     };
 
     DataflowWidget.prototype.render = function() {};
@@ -309,26 +309,24 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
                 var magic = 5; // FIXME: computed from Component border+padding+1
                 points = `${srcRect.left} ${srcRect.top + 31} ${dstRect.left + 50} ${srcRect.top + 31} ${dstRect.left + 50} ${dstRect.top + 62 + magic}`;
             }
-            var ret = {};
-            extend(ret, connection);
-            ret.points = points;
-            return ret;
-        }).filter(connection => connection && connection.points);
-        extend(this.app.state, {
+            connection.points = points;
+        });
+        const state = {... this.app.state,
             nodes: this.nodes,
             components: this.components,
-            connections: mapById(connections),
+            connections: this.connections,
             dispatchEvent: this.dispatchEvent
-        });
-        this.app.setState(this.app.state);
+        };
+        this.app.setState(state);
     };
 
     DataflowWidget.prototype.dispatchEvent = function (name, args) {
         // console.log(args);
         switch (name) {
             case 'inspect':
-                this.app.state.inspector = args;
-                this.app.setState(this.app.state);
+                this.app.setState({
+                  ...this.app.state,
+                  inspector: args});
         }
     };
 
