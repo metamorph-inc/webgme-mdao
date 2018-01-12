@@ -111,7 +111,8 @@ define([
     /* * * * * * * * Node Event Handling * * * * * * * */
     DataflowControl.prototype._eventCallback = function (events) {
         var i = events ? events.length : 0,
-            event;
+            event,
+            adds = [];
 
         this._logger.debug('_eventCallback \'' + i + '\' items');
 
@@ -120,13 +121,14 @@ define([
             switch (event.etype) {
 
             case CONSTANTS.TERRITORY_EVENT_LOAD:
-                this._onLoad(event.eid);
+                adds.push(this._onLoad(event.eid));
                 break;
             case CONSTANTS.TERRITORY_EVENT_UPDATE:
                 this._onUpdate(event.eid);
                 break;
             case CONSTANTS.TERRITORY_EVENT_UNLOAD:
                 this._onUnload(event.eid);
+                // TODO remove from territory
                 break;
             case CONSTANTS.TERRITORY_EVENT_COMPLETE:
                 this._widget.territoryComplete();
@@ -135,16 +137,21 @@ define([
             }
         }
 
+        // n.b. wait to add to territory, or we get a territoryComplete before this._onLoad
+        adds.forEach((function (description) {
+          if (description.type === 'Component') {
+              this._selfPatterns[description.id] = {children: 1};
+              this._client.updateTerritory(this._territoryId, this._selfPatterns);
+          }
+        }).bind(this));
+
         this._logger.debug('_eventCallback \'' + events.length + '\' items - DONE');
     };
 
     DataflowControl.prototype._onLoad = function (gmeId) {
         var description = this._getObjectDescriptor(gmeId);
-        if (description.type === 'Component') {
-            this._selfPatterns[gmeId] = {children: 1};
-            this._client.updateTerritory(this._territoryId, this._selfPatterns);
-        }
         this._widget.addNode(description);
+        return description;
     };
 
     DataflowControl.prototype._onUpdate = function (gmeId) {

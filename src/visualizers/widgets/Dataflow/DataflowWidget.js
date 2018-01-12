@@ -298,6 +298,7 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
             var srcRect = this.nodes[getParentId(desc.srcId)];
             var dstRect = this.nodes[getParentId(desc.dstId)];
             if (!srcRect || !dstRect) {
+                debugger;
                 return;
             }
             var points;
