@@ -322,12 +322,19 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
             var points;
             var COMPONENT_WIDTH_2 = COMPONENT_WIDTH / 2;
             var COMPONENT_HEIGHT_2 = COMPONENT_HEIGHT / 2;
+            var dstIndex = this.components.indexOf(this.nodes[connection.dstId]);
+            var srcIndex = this.components.indexOf(this.nodes[connection.srcId]);
+            var nComponents = this.components.length;
             if (srcRect.top < dstRect.top) {
                 var magic = 5; // FIXME: computed from Component border+padding+1
-                points = `${srcRect.left + COMPONENT_WIDTH} ${srcRect.top + COMPONENT_HEIGHT_2} ${dstRect.left + COMPONENT_WIDTH_2} ${srcRect.top + 31} ${dstRect.left + COMPONENT_WIDTH_2} ${dstRect.top - magic}`;
+                const y1 = Math.floor(srcRect.top + COMPONENT_HEIGHT * 3 / 4 - COMPONENT_HEIGHT_2 * dstIndex / nComponents);
+                const x2 = Math.floor(dstRect.left + COMPONENT_WIDTH * 1 / 4 + COMPONENT_WIDTH_2 * srcIndex / nComponents);
+                points = `${srcRect.left + COMPONENT_WIDTH} ${y1} ${x2} ${y1} ${x2} ${dstRect.top - magic}`;
             } else {
                 var magic = 5; // FIXME: computed from Component border+padding+1
-                points = `${srcRect.left} ${srcRect.top + COMPONENT_HEIGHT_2} ${dstRect.left + COMPONENT_WIDTH_2} ${srcRect.top + COMPONENT_HEIGHT_2} ${dstRect.left + COMPONENT_WIDTH_2} ${dstRect.top + COMPONENT_HEIGHT + magic}`;
+                const y1 = Math.floor(srcRect.top + COMPONENT_HEIGHT * 3 / 4 - COMPONENT_HEIGHT_2 * dstIndex / nComponents);
+                const x2 = Math.floor(dstRect.left + COMPONENT_WIDTH * 3 / 4 - COMPONENT_WIDTH_2 * srcIndex / nComponents);
+                points = `${srcRect.left} ${y1} ${x2} ${y1} ${x2} ${dstRect.top + COMPONENT_HEIGHT + magic}`;
             }
             connection.points = points;
         });
@@ -385,7 +392,9 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
             if (connection === undefined) {
                 connection = this.connections[getConnectionsKey(desc)] = {
                     id: getConnectionsKey(desc),
-                    valueflows: []
+                    valueflows: [],
+                    srcId: getParentId(desc.srcId),
+                    dstId: getParentId(desc.dstId),
                 };
             }
             this.nodes[desc.id].connection = connection;
