@@ -10,11 +10,24 @@ import ReactDOM from 'react-dom';
 
 define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
     'use strict';
+    var COMPONENT_HEIGHT = 62;
+    var COMPONENT_WIDTH = 100;
 
     class Component extends React.PureComponent {
         constructor() {
             super();
             this.handleClick = this.handleClick.bind(this);
+            this.state = { img: true };
+            this.hideImg = () => this.setState({...this.state, img: false});
+
+            this.colorMap = {
+                'Python': '#75b4f6',
+                'Excel': '#cccccc', //'#00592d',
+                'CATIA': '#cccccc',
+                'PATRAN': '#cccccc',
+                'NASTRAN': '#cccccc',
+                'Matlab': '#f97a0f'
+                };
         }
 
         handleClick() {
@@ -28,14 +41,19 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
             var {
                 name,
                 top,
-                left
+                left,
+                wrapper,
             } = this.props;
+            const img = this.state.img;
 
             return <div className='Component' style={{
                     top: top + 'px',
                     left: left + 'px',
-                    zIndex: 2
+                    zIndex: 2,
+                    backgroundColor: this.colorMap[wrapper] || '#cccccc'
                 }} onClick={this.handleClick}>
+                { img ? <img src={`/extlib/images/${(wrapper || '').toLowerCase()}.png`} onError={this.hideImg} /> : null
+                }
                 {name}</div>
         }
     }
@@ -160,7 +178,7 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
                         }}>
                         {
                             components.map(function(c) {
-                                return <Component key={c.id} id={c.id} top={c.top} left={c.left} name={c.name} dispatchEvent={dispatchEvent}/>;
+                                return <Component key={c.id} id={c.id} top={c.top} left={c.left} name={c.name} wrapper={c.wrapper} dispatchEvent={dispatchEvent}/>;
                             })
                         }
                         <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" style={{
@@ -268,8 +286,8 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
             return 0;
         });
         this.components.forEach(component => {
-            component.top = 80 + counter * 100;
-            component.left = 80 + counter * 100;
+            component.top = 80 + counter * COMPONENT_WIDTH;
+            component.left = 80 + counter * COMPONENT_WIDTH;
             counter++;
         });
 
@@ -302,12 +320,14 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
                 return;
             }
             var points;
+            var COMPONENT_WIDTH_2 = COMPONENT_WIDTH / 2;
+            var COMPONENT_HEIGHT_2 = COMPONENT_HEIGHT / 2;
             if (srcRect.top < dstRect.top) {
                 var magic = 5; // FIXME: computed from Component border+padding+1
-                points = `${srcRect.left + 100} ${srcRect.top + 31} ${dstRect.left + 50} ${srcRect.top + 31} ${dstRect.left + 50} ${dstRect.top - magic}`;
+                points = `${srcRect.left + COMPONENT_WIDTH} ${srcRect.top + COMPONENT_HEIGHT_2} ${dstRect.left + COMPONENT_WIDTH_2} ${srcRect.top + 31} ${dstRect.left + COMPONENT_WIDTH_2} ${dstRect.top - magic}`;
             } else {
                 var magic = 5; // FIXME: computed from Component border+padding+1
-                points = `${srcRect.left} ${srcRect.top + 31} ${dstRect.left + 50} ${srcRect.top + 31} ${dstRect.left + 50} ${dstRect.top + 62 + magic}`;
+                points = `${srcRect.left} ${srcRect.top + COMPONENT_HEIGHT_2} ${dstRect.left + COMPONENT_WIDTH_2} ${srcRect.top + COMPONENT_HEIGHT_2} ${dstRect.left + COMPONENT_WIDTH_2} ${dstRect.top + COMPONENT_HEIGHT + magic}`;
             }
             connection.points = points;
         });

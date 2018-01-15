@@ -92,16 +92,18 @@ define([
         var node = this._client.getNode(nodeId),
             objDescriptor;
         if (node) {
+            const base = this._client.getAllMetaNodes().find((meta) => meta._id == node.getBaseTypeId());
             objDescriptor = {
                 id: node.getId(),
                 name: node.getAttribute(nodePropertyNames.Attributes.name),
                 childrenIds: node.getChildrenIds(),
                 // FIXME getBaseTypeId or getBaseId ?
-                type: this._client.getAllMetaNodes().find((meta) => meta._id == node.getBaseTypeId()).getAttribute(nodePropertyNames.Attributes.name),
+                type: (base || node).getAttribute(nodePropertyNames.Attributes.name),
                 parentId: node.getParentId(),
                 isConnection: GMEConcepts.isConnection(nodeId),
                 srcId: node.getOwnPointerId("src"),
-                dstId: node.getOwnPointerId("dst")
+                dstId: node.getOwnPointerId("dst"),
+                wrapper: node.getAttribute("package")
             };
         }
 

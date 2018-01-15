@@ -17,8 +17,9 @@
     /* top and left set in code */
     width: 100px;
     height: 62px;
-    border: 1px solid #000000;
+    /* border: 1px solid #000000;*/
     background-color: #ECECEC;
+    border-radius: 9px;
     padding: 3px;
     text-align: center;
 
@@ -26,6 +27,14 @@
     font-size: 11px;
     font-weight: bold;
     font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+}
+
+.dataflow .Component img {
+    position: absolute;
+    max-height: 45px;
+    top: 15px;
+    left: 5px;
+    z-index: -1;
 }
 
 .dataflow > .Dataflow {
