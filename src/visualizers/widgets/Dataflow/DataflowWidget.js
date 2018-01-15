@@ -8,11 +8,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
-import { withStyles } from 'material-ui/styles';
-import Table, { TableBody, TableCell, TableHead, TableRow } from 'material-ui/Table';
+import {withStyles} from 'material-ui/styles';
+import Table, {TableBody, TableCell, TableHead, TableRow} from 'material-ui/Table';
 import Paper from 'material-ui/Paper';
 
-define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
+define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function () {
     'use strict';
 
     class Component extends React.PureComponent {
@@ -36,10 +36,10 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
             } = this.props;
 
             return <div className='Component' style={{
-                    top: top + 'px',
-                    left: left + 'px',
-                    zIndex: 2
-                }} onClick={this.handleClick}>
+                top: top + 'px',
+                left: left + 'px',
+                zIndex: 2
+            }} onClick={this.handleClick}>
                 {name}</div>
         }
     }
@@ -61,7 +61,8 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
             var {
                 points
             } = this.props;
-            return <polyline xmlns="http://www.w3.org/2000/svg" points={points} markerEnd="url(#triangle)" stroke="black" strokeWidth="2" fill="none" onClick={this.handleClick}/>
+            return <polyline xmlns="http://www.w3.org/2000/svg" points={points} markerEnd="url(#triangle)"
+                             stroke="black" strokeWidth="2" fill="none" onClick={this.handleClick}/>
         }
     }
 
@@ -73,14 +74,35 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
                 nodes,
                 connections,
             } = this.props;
+
             const valueflows = connections[id].valueflows;
-            return (<div>{ (valueflows || []).map(vf => {
-                var srcPort = nodes[vf.srcId];
-                var dstPort = nodes[vf.dstId];
-                var src = srcPort ? nodes[srcPort.parentId] : undefined;
-                var dst = dstPort ? nodes[dstPort.parentId] : undefined;
-                return <div key={vf.id}>{src.name}.{srcPort.name} {dst.name}.{dstPort.name}</div>; })
-            }</div>);
+
+            return (
+                <Paper className={PropTypes.object.isRequired.root}>
+                    <Table className={PropTypes.object.isRequired.table}>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>Src Component</TableCell>
+                                <TableCell>Src Variable</TableCell>
+                                <TableCell>Dst Variable</TableCell>
+                                <TableCell>Dst Component</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {(valueflows || []).map(vf => {
+                                return (
+                                    <TableRow key={vf.id}>
+                                        <TableCell>{nodes[nodes[vf.srcId].parentId].name}</TableCell>
+                                        <TableCell>{nodes[vf.srcId].name}</TableCell>
+                                        <TableCell>{nodes[vf.dstId].name}</TableCell>
+                                        <TableCell>{nodes[nodes[vf.dstId].parentId].name}</TableCell>
+                                    </TableRow>
+                                );
+                            })}
+                        </TableBody>
+                    </Table>
+                </Paper>
+            );
         }
     }
 
@@ -152,7 +174,7 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {ports.map( p => {
+                            {ports.map(p => {
                                 return (
                                     <TableRow key={p.id}>
                                         <TableCell>{name}</TableCell>
@@ -167,8 +189,6 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
                     </Table>
                 </Paper>
             )
-
-            // return <div>{name}</div>;
         }
     }
 
@@ -197,7 +217,8 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
                     // { id: '/a/b/c', top: 100, left: 400, name: 'tst'}
                 ],
                 connections: [],
-                dispatchEvent: () => {},
+                dispatchEvent: () => {
+                },
                 inspectorHeight: 250,
                 inspector: {},
                 nodes: {},
@@ -226,48 +247,52 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
             // <div style={{width: '100%', height: components.map(c => { return c.top }).reduce((a, b) => { return Math.max(a,b) }, 0) + 200 + 'px' }}>
             // <div style={{width: '100%', height: 'calc(100% - 3em)'}}>
             return (<div style={{
-                    width,
-                    height
-                }}>
+                width,
+                height
+            }}>
 
                 <div style={{
-                        width: '100%',
-                        height: `calc(100% - ${inspectorHeight}px)`,
-                        overflow: 'auto'
-                    }}>
+                    width: '100%',
+                    height: `calc(100% - ${inspectorHeight}px)`,
+                    overflow: 'auto'
+                }}>
                     <div style={{
-                            width: '100%',
-                            height: componentsHeight + 150 + 'px',
-                            position: 'relative'
-                        }}>
+                        width: '100%',
+                        height: componentsHeight + 150 + 'px',
+                        position: 'relative'
+                    }}>
                         {
-                            components.map(function(c) {
-                                return <Component key={c.id} id={c.id} top={c.top} left={c.left} name={c.name} dispatchEvent={dispatchEvent}/>;
+                            components.map(function (c) {
+                                return <Component key={c.id} id={c.id} top={c.top} left={c.left} name={c.name}
+                                                  dispatchEvent={dispatchEvent}/>;
                             })
                         }
                         <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" style={{
-                                position: "absolute",
-                                overflow: "unset"
-                            }}>
-                            <marker xmlns="http://www.w3.org/2000/svg" id="triangle" viewBox="0 0 10 10" refX="0" refY="5" markerUnits="strokeWidth" markerWidth="4" markerHeight="3" orient="auto">
+                            position: "absolute",
+                            overflow: "unset"
+                        }}>
+                            <marker xmlns="http://www.w3.org/2000/svg" id="triangle" viewBox="0 0 10 10" refX="0"
+                                    refY="5" markerUnits="strokeWidth" markerWidth="4" markerHeight="3" orient="auto">
                                 <path d="M 0 0 L 10 5 L 0 10 z"/>
                             </marker>
                             {
                                 Object.getOwnPropertyNames(connections).map(id => {
                                     const c = connections[id];
-                                    return (<Connection key={c.id} id={c.id} points={c.points} dispatchEvent={dispatchEvent}/>)
+                                    return (<Connection key={c.id} id={c.id} points={c.points}
+                                                        dispatchEvent={dispatchEvent}/>)
                                 })
                             }
                         </svg>
                     </div>
                 </div>
                 <div style={{
-                        width: '100%',
-                        height: inspectorHeight + 'px',
-                        top: `calc(100% - ${inspectorHeight}px)`,
-                        position: 'absolute',
-                        backgroundColor: 'lightgrey'
-                    }}><Inspector id={inspector.id} type={inspector.type} components={components} connections={connections} nodes={nodes}/></div>
+                    width: '100%',
+                    height: inspectorHeight + 'px',
+                    top: `calc(100% - ${inspectorHeight}px)`,
+                    position: 'absolute',
+                    backgroundColor: 'lightgrey'
+                }}><Inspector id={inspector.id} type={inspector.type} components={components} connections={connections}
+                              nodes={nodes}/></div>
             </div>);
         }
     }
@@ -290,7 +315,7 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
         this._logger.debug('ctor finished');
     };
 
-    DataflowWidget.prototype._initialize = function() {
+    DataflowWidget.prototype._initialize = function () {
         // set widget class
         this._el.addClass(WIDGET_CLASS);
 
@@ -307,19 +332,21 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
         }); */
     };
 
-    DataflowWidget.prototype.onWidgetContainerResize = function(width, height) {
+    DataflowWidget.prototype.onWidgetContainerResize = function (width, height) {
         this._logger.debug('Widget is resizing...');
 
         this.app.setState({
-          ...this.app.state,
-          width,
-          height});
+            ...this.app.state,
+            width,
+            height
+        });
     };
 
-    DataflowWidget.prototype.render = function() {};
+    DataflowWidget.prototype.render = function () {
+    };
 
     // Adding/Removing/Updating items
-    DataflowWidget.prototype.addNode = function(desc) {
+    DataflowWidget.prototype.addNode = function (desc) {
         this.nodes[desc.id] = desc;
 
         if (desc && desc.type === 'Component') {
@@ -338,7 +365,7 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
         return strip(connection.srcId) + '__' + strip(connection.dstId);
     };
 
-    DataflowWidget.prototype.territoryComplete = function() {
+    DataflowWidget.prototype.territoryComplete = function () {
         var counter = 0;
         this.components.sort((a, b) => {
             if (a.name < b.name) {
@@ -368,7 +395,7 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
         });
 
         const mapById = arr => {
-            return arr.reduce(function(map, obj) {
+            return arr.reduce(function (map, obj) {
                 map[obj.id] = obj;
                 return map;
             }, {});
@@ -393,7 +420,8 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
             }
             connection.points = points;
         });
-        const state = {... this.app.state,
+        const state = {
+            ...this.app.state,
             nodes: this.nodes,
             components: this.components,
             connections: this.connections,
@@ -407,12 +435,13 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
         switch (name) {
             case 'inspect':
                 this.app.setState({
-                  ...this.app.state,
-                  inspector: args});
+                    ...this.app.state,
+                    inspector: args
+                });
         }
     };
 
-    DataflowWidget.prototype.removeNode = function(gmeId) {
+    DataflowWidget.prototype.removeNode = function (gmeId) {
         var desc = this.nodes[gmeId];
         // this._el.append('<div>Removing node "' + desc.name + '"</div>');
         if (desc.connection) {
@@ -430,7 +459,7 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
         delete this.nodes[gmeId];
     };
 
-    DataflowWidget.prototype.updateConnection = function(desc) {
+    DataflowWidget.prototype.updateConnection = function (desc) {
         if (desc.connection && (!desc.srcId || !desc.dstId)) {
             var index = desc.connection.valueflows.indexOf(desc);
             if (index === -1) {
@@ -462,7 +491,7 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
         });
     };
 
-    DataflowWidget.prototype.updateNode = function(desc) {
+    DataflowWidget.prototype.updateNode = function (desc) {
         if (desc) {
             this._logger.debug('Updating node:', desc);
             extend(this.nodes[desc.id], desc);
@@ -476,23 +505,24 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
 
     /* * * * * * * * Visualizer event handlers * * * * * * * */
 
-    DataflowWidget.prototype.onNodeClick = function(/* id */) {
+    DataflowWidget.prototype.onNodeClick = function (/* id */) {
         // This currently changes the active node to the given id and
         // this is overridden in the controller.
     };
 
-    DataflowWidget.prototype.onBackgroundDblClick = function() {
+    DataflowWidget.prototype.onBackgroundDblClick = function () {
         // this._el.append('<div>Background was double-clicked!!</div>');
     };
 
     /* * * * * * * * Visualizer life cycle callbacks * * * * * * * */
-    DataflowWidget.prototype.destroy = function() {};
+    DataflowWidget.prototype.destroy = function () {
+    };
 
-    DataflowWidget.prototype.onActivate = function() {
+    DataflowWidget.prototype.onActivate = function () {
         this._logger.debug('DataflowWidget has been activated');
     };
 
-    DataflowWidget.prototype.onDeactivate = function() {
+    DataflowWidget.prototype.onDeactivate = function () {
         this._logger.debug('DataflowWidget has been deactivated');
     };
 
