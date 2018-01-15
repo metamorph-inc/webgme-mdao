@@ -7,6 +7,10 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom';
+import PropTypes from 'prop-types';
+import { withStyles } from 'material-ui/styles';
+import Table, { TableBody, TableCell, TableHead, TableRow } from 'material-ui/Table';
+import Paper from 'material-ui/Paper';
 
 define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
     'use strict';
@@ -61,6 +65,7 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
         }
     }
 
+    // Visualization for a connection between two components
     class InspectorConnection extends React.Component {
         render() {
             const {
@@ -79,14 +84,55 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
         }
     }
 
+    // Visualization for an individual Component
     class InspectorComponent extends React.Component {
         render() {
             const {
                 nodes,
                 id
             } = this.props;
+
             const name = nodes[id].name;
-            return <div>{name}</div>;
+
+            var ports = [];
+            nodes[id].childrenIds.forEach(port_id => {
+                var port_data = nodes[port_id];
+                ports.push({
+                    name: port_data.name,
+                    type: port_data.type,
+                    id: port_data.id,
+                    // datatype: port_data.datatype
+                });
+            });
+
+            return (
+                <Paper className={PropTypes.object.isRequired.root}>
+                    <Table className={PropTypes.object.isRequired.table}>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>Component</TableCell>
+                                <TableCell>Variable</TableCell>
+                                <TableCell>Input/Output</TableCell>
+                                <TableCell>Type</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {ports.map( p => {
+                                return (
+                                    <TableRow key={p.id}>
+                                        <TableCell>{name}</TableCell>
+                                        <TableCell>{p.name}</TableCell>
+                                        <TableCell>{p.type}</TableCell>
+                                        <TableCell>{p.datatype}</TableCell>
+                                    </TableRow>
+                                );
+                            })}
+                        </TableBody>
+                    </Table>
+                </Paper>
+            )
+
+            // return <div>{name}</div>;
         }
     }
 
@@ -116,7 +162,7 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
                 ],
                 connections: [],
                 dispatchEvent: () => {},
-                inspectorHeight: 100,
+                inspectorHeight: 250,
                 inspector: {},
                 nodes: {},
                 connections: {}
