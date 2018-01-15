@@ -89,19 +89,53 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
         render() {
             const {
                 nodes,
-                id
+                id,
+                connections,
             } = this.props;
 
             const name = nodes[id].name;
 
             var ports = [];
             nodes[id].childrenIds.forEach(port_id => {
+                // How do we calculate what this guy is connected to?
+                // We need to go through the 'connections' data structure
+                //   and look for connections that have this as an end.
+                // Then we can fetch details on the other end.
+                var other_sides = [];
+                Object.keys(connections).forEach(key => {
+                    connections[key].valueflows.forEach(vf => {
+                        var srcId = vf.srcId,
+                            dstId = vf.dstId
+
+                        if (vf.srcId == port_id) {
+                            // Let's learn about the destination.
+                            other_sides.push({
+                                componentName: nodes[nodes[vf.dstId].parentId].name,
+                                name: nodes[vf.dstId].name
+                            });
+                        }
+                        else if (vf.dstId == port_id) {
+                            // Let's learn about the source.
+                            other_sides.push({
+                                componentName: nodes[nodes[vf.srcId].parentId].name,
+                                name: nodes[vf.srcId].name
+                            });
+                        }
+                    });
+                });
+
+                var other_sides_str = [];
+                other_sides.forEach(os => {
+                    other_sides_str.push(os.componentName + "::" + os.name);
+                });
+
                 var port_data = nodes[port_id];
                 ports.push({
                     name: port_data.name,
                     type: port_data.type,
                     id: port_data.id,
                     // datatype: port_data.datatype
+                    connectedTo: other_sides_str.join(', ')
                 });
             });
 
@@ -114,6 +148,7 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
                                 <TableCell>Variable</TableCell>
                                 <TableCell>Input/Output</TableCell>
                                 <TableCell>Type</TableCell>
+                                <TableCell>Connected To</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
@@ -124,6 +159,7 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function() {
                                         <TableCell>{p.name}</TableCell>
                                         <TableCell>{p.type}</TableCell>
                                         <TableCell>{p.datatype}</TableCell>
+                                        <TableCell>{p.connectedTo}</TableCell>
                                     </TableRow>
                                 );
                             })}
