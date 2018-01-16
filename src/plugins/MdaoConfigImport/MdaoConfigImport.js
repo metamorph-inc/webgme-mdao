@@ -21,6 +21,25 @@ define([
 
     pluginMetadata = JSON.parse(pluginMetadata);
 
+    var choose = (items) => {
+        return items[Math.floor(Math.random() * items.length)];
+    };
+    var inputOutputDatatypes = [
+        'int',
+        'double',
+        'double[]',
+        'string',
+        'int[]'];
+    var packages = [
+            'Python',
+            'Excel',
+            'CATIA',
+            'PATRAN',
+            'NASTRAN',
+            'Matlab',
+        ];
+
+
     /**
      * Initializes a new instance of MdaoConfigImport.
      * @class
@@ -98,6 +117,7 @@ define([
                 };
                 self.core.setAttribute(component, 'name', componentName);
                 self.core.setAttribute(component, 'type', componentConfig.type);
+                self.core.setAttribute(component, 'package', choose(packages));
 
                 var i = 0;
                 Object.getOwnPropertyNames(componentConfig.parameters).forEach(function (parameterName) {
@@ -108,6 +128,7 @@ define([
                   });
                   self.components[componentName].inputs[parameterName] = input;
                   self.core.setAttribute(input, 'name', parameterName);
+                  self.core.setAttribute(input, 'type', choose(inputOutputDatatypes));
                   self.core.setRegistry(input, 'position', {x: 70, y: 70 * i++});
                 });
                 i = 0;
@@ -119,6 +140,7 @@ define([
                   });
                   self.components[componentName].outputs[unknownName] = output;
                   self.core.setAttribute(output, 'name', unknownName);
+                  self.core.setAttribute(output, 'type', choose(inputOutputDatatypes));
                   self.core.setRegistry(nodeObject, 'position', {x: 270, y: 70 * i++});
                 });
               });

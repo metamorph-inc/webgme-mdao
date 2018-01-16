@@ -103,7 +103,8 @@ define([
                 isConnection: GMEConcepts.isConnection(nodeId),
                 srcId: node.getOwnPointerId("src"),
                 dstId: node.getOwnPointerId("dst"),
-                wrapper: node.getAttribute("package")
+                wrapper: node.getAttribute("package"),
+                typeAttribute: node.getAttribute("type"),
             };
         }
 
