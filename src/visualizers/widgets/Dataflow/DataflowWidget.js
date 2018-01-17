@@ -23,7 +23,6 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function () {
             this.handleClick = this.handleClick.bind(this);
             this.state = { img: true };
             this.hideImg = () => this.setState({...this.state, img: false});
-
             this.colorMap = {
                 'Python': '#75b4f6',
                 'Excel': '#cccccc', //'#00592d',
@@ -32,6 +31,9 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function () {
                 'NASTRAN': '#cccccc',
                 'Matlab': '#f97a0f'
                 };
+            this.dragStart = (ev) => {
+                return this.props.dragStart(ev, this.props.id);
+            };
         }
 
         handleClick() {
@@ -51,7 +53,9 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function () {
             } = this.props;
             const img = this.state.img;
 
-            return <div className={selected ? 'Component selected' : 'Component'}  style={{
+            return <div
+                draggable="true" onDragStart={this.dragStart}
+                className={selected ? 'Component selected' : 'Component'}  style={{
                 top: top + 'px',
                 left: left + 'px',
                 zIndex: 2,
@@ -261,9 +265,39 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function () {
                 inspectorHeight: 220,
                 inspector: {},
                 nodes: {},
-                connections: {}
+                connections: {},
             };
-        }
+            this.dragOver = (ev) => {
+                 ev.preventDefault();
+                 ev.dataTransfer.dropEffect = "move";
+                 var comp = this.state.components.filter((c) => { return c.id === this.dragComponentId })[0];
+                 if (!this.dragComponentId || !comp) {
+                   return;
+                 }
+                 var index = this.state.components.indexOf(comp);
+
+                 var rect = this.componentsDiv.getBoundingClientRect();
+                 // console.log(`${ev.pageX}  - ${rect.left} (${ev.pageX - rect.left}) > ${comp.left} + 101`);
+                 if (ev.pageX - rect.left > comp.left + COMPONENT_WIDTH * 1.2 &&
+                     ev.pageY - rect.top > comp.top + COMPONENT_WIDTH * 1.2) {
+                       if (index === this.state.components.length - 1) {
+                         return;
+                       }
+                       this.state.dispatchEvent('moveComponent', [this.dragComponentId, 1]);
+                 }
+                 else if (ev.pageX - rect.left < comp.left - COMPONENT_WIDTH * 0.2 &&
+                     ev.pageY - rect.top < comp.top - COMPONENT_WIDTH * 0.2) {
+                       if (index === 0) {
+                         return;
+                       }
+                     this.state.dispatchEvent('moveComponent', [this.dragComponentId, -1]);
+                 }
+             };
+             this.dragStart = (ev, componentId) => {
+                 ev.dataTransfer.dropEffect = "move";
+                 this.dragComponentId = componentId;
+             };
+         }
 
         render() {
             const {
@@ -299,11 +333,14 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function () {
                         width: '100%',
                         height: componentsHeight + 150 + 'px',
                         position: 'relative'
-                    }}>
+                    }}
+                    onDragOver={this.dragOver}
+                    ref={(div) => { this.componentsDiv = div; }}
+                    >
                         {
-                            components.map(function (c) {
+                            components.map(c => {
                                 return <Component key={c.id} id={c.id} top={c.top} left={c.left} name={c.name}
-                                                  wrapper={c.wrapper} dispatchEvent={dispatchEvent} selected={inspector.id === c.id}/>;
+                                                  wrapper={c.wrapper} dispatchEvent={dispatchEvent} selected={inspector.id === c.id} dragStart={this.dragStart}/>;
                             })
                         }
                         <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" style={{
@@ -406,13 +443,11 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function () {
     DataflowWidget.prototype.territoryComplete = function () {
         var counter = 0;
         this.components.sort((a, b) => {
-            if (a.name < b.name) {
-                return -1;
+            var comp = (a.position || 0) - (b.position || 0);
+            if (comp !== 0) {
+              return comp;
             }
-            if (a.name > b.name) {
-                return 1;
-            }
-            return 0;
+            return a.name.localeCompare(b.name);
         });
         this.components.forEach(component => {
             component.top = 80 + counter * COMPONENT_WIDTH;
@@ -439,43 +474,73 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function () {
             }, {});
         };
 
-        var connections = Object.getOwnPropertyNames(this.connections).map(connectionsKey => {
-            var connection = this.connections[connectionsKey];
-            var desc = connection.valueflows[0];
-            var srcRect = this.nodes[getParentId(desc.srcId)];
-            var dstRect = this.nodes[getParentId(desc.dstId)];
-            if (!srcRect || !dstRect) {
-                debugger;
-                return;
-            }
-            var points;
-            var COMPONENT_WIDTH_2 = COMPONENT_WIDTH / 2;
-            var COMPONENT_HEIGHT_2 = COMPONENT_HEIGHT / 2;
-            var dstIndex = this.components.indexOf(this.nodes[connection.dstId]);
-            var srcIndex = this.components.indexOf(this.nodes[connection.srcId]);
-            var nComponents = this.components.length;
-            if (srcRect.top < dstRect.top) {
-                var magic = 5; // FIXME: computed from Component border+padding+1
-                const y1 = Math.floor(srcRect.top + COMPONENT_HEIGHT * 3 / 4 - COMPONENT_HEIGHT_2 * dstIndex / nComponents);
-                const x2 = Math.floor(dstRect.left + COMPONENT_WIDTH * 1 / 4 + COMPONENT_WIDTH_2 * srcIndex / nComponents);
-                points = `${srcRect.left + COMPONENT_WIDTH} ${y1} ${x2} ${y1} ${x2} ${dstRect.top - magic}`;
-            } else {
-                var magic = 5; // FIXME: computed from Component border+padding+1
-                const y1 = Math.floor(srcRect.top + COMPONENT_HEIGHT * 3 / 4 - COMPONENT_HEIGHT_2 * dstIndex / nComponents);
-                const x2 = Math.floor(dstRect.left + COMPONENT_WIDTH * 3 / 4 - COMPONENT_WIDTH_2 * srcIndex / nComponents);
-                points = `${srcRect.left} ${y1} ${x2} ${y1} ${x2} ${dstRect.top + COMPONENT_HEIGHT + magic}`;
-            }
-            connection.points = points;
-        });
+        this.recalculateConnectionPoints();
         const state = {
             ...this.app.state,
             nodes: this.nodes,
             components: this.components,
             connections: this.connections,
-            dispatchEvent: this.dispatchEvent
+            dispatchEvent: this.dispatchEvent,
         };
         this.app.setState(state);
+
+        var endTx = () => {};
+        var startTx = () => {
+          this.client.startTransaction('Set Workflow positions ');
+          startTx = () => {};
+          endTx = () => {
+            this.client.completeTransaction('', (err, result) => {
+              if (err) {
+                console.log(err);
+              }
+            });
+          };
+        };
+        setTimeout(() => {
+          this.components.reduce((pos, component) => {
+            if (component.position !== pos) {
+              startTx();
+              component.position = pos;
+              this.client.setRegistry(component.id, 'dataflow_position', pos, 'set position');
+              // console.log(`init ${component.name} ${component.position}`);
+            }
+            return pos + 1;
+          }, 0);
+          endTx();
+        }, 1);
     };
+
+    DataflowWidget.prototype.recalculateConnectionPoints = function() {
+      Object.getOwnPropertyNames(this.connections).forEach(connectionsKey => {
+          var connection = this.connections[connectionsKey];
+          var desc = connection.valueflows[0];
+          var srcRect = this.nodes[getParentId(desc.srcId)];
+          var dstRect = this.nodes[getParentId(desc.dstId)];
+          if (!srcRect || !dstRect) {
+              debugger;
+              return;
+          }
+          var points;
+          var COMPONENT_WIDTH_2 = COMPONENT_WIDTH / 2;
+          var COMPONENT_HEIGHT_2 = COMPONENT_HEIGHT / 2;
+          var dstIndex = this.components.indexOf(this.nodes[connection.dstId]);
+          var srcIndex = this.components.indexOf(this.nodes[connection.srcId]);
+          var nComponents = this.components.length;
+          if (srcRect.top < dstRect.top) {
+              var magic = 5; // FIXME: computed from Component border+padding+1
+              const y1 = Math.floor(srcRect.top + COMPONENT_HEIGHT * 3 / 4 - COMPONENT_HEIGHT_2 * dstIndex / nComponents);
+              const x2 = Math.floor(dstRect.left + COMPONENT_WIDTH * 1 / 4 + COMPONENT_WIDTH_2 * srcIndex / nComponents);
+              points = `${srcRect.left + COMPONENT_WIDTH} ${y1} ${x2} ${y1} ${x2} ${dstRect.top - magic}`;
+          } else {
+              var magic = 5; // FIXME: computed from Component border+padding+1
+              const y1 = Math.floor(srcRect.top + COMPONENT_HEIGHT * 3 / 4 - COMPONENT_HEIGHT_2 * dstIndex / nComponents);
+              const x2 = Math.floor(dstRect.left + COMPONENT_WIDTH * 3 / 4 - COMPONENT_WIDTH_2 * srcIndex / nComponents);
+              points = `${srcRect.left} ${y1} ${x2} ${y1} ${x2} ${dstRect.top + COMPONENT_HEIGHT + magic}`;
+          }
+          connection.points = points;
+      });
+    }
+
 
     DataflowWidget.prototype.dispatchEvent = function (name, args) {
         // console.log(args);
@@ -485,6 +550,45 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function () {
                     ...this.app.state,
                     inspector: args
                 });
+            case 'moveComponent':
+                var componentId = args[0];
+                var direction = args[1];
+                var comps = this.components = this.components.slice();
+                var comp = comps.filter((c) => { return c.id === componentId })[0];
+                var index = comps.indexOf(comp);
+
+                if (direction === 1) {
+                  comps.splice(index, 1);
+                  comps.splice(index + 1, 0, comp);
+                }
+                else if (direction === -1) {
+                  comps.splice(index, 1);
+                  comps.splice(index - 1, 0, comp);
+                }
+                var left = comp.left;
+                var top = comp.top;
+                comp.left = comps[index].left;
+                comp.top = comps[index].top;
+                comps[index].left = left;
+                comps[index].top = top;
+                comp.position = index + direction;
+                comps[index].position = index;
+                this.client.startTransaction('Set Workflow positions ');
+                this.client.setRegistry(comp.id, 'dataflow_position', comp.position, 'set position');
+                this.client.setRegistry(comps[index].id, 'dataflow_position', comps[index].position, 'set position');
+                // console.log(`${comp.name}   ${comp.position}`);
+                // console.log(`${comps[index].name}   ${comps[index].position}`);
+                this.client.completeTransaction('', (err, result) => {
+                  if (err) {
+                    console.log(err);
+                  }
+                });
+
+                this.recalculateConnectionPoints();
+                this.app.setState({...this.app.state,
+                     components: this.components,
+                     connections: this.connections});
+
         }
     };
 
@@ -497,12 +601,22 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function () {
             if (desc.connection.valueflows.length === 0) {
                 delete this.connections[desc.connection.id];
             }
+            if (this.app.state.inspector.id === desc.connection.id) {
+                this.app.setState({...this.app.state,
+                    inspector: {id: null, type: null}
+                });
+            }
         }
         var componentIndex = this.components.indexOf(desc);
         if (componentIndex !== -1) {
             this.components.splice(componentIndex, 1);
-
+            if (this.app.state.inspector.id === desc.id) {
+                this.app.setState({...this.app.state,
+                    inspector: {id: null, type: null}
+                });
+            }
         }
+
         delete this.nodes[gmeId];
     };
 
@@ -516,6 +630,12 @@ define(['css!../../widgets/Dataflow/styles/DataflowWidget.css'], function () {
             if (desc.connection.valueflows.length === 0) {
                 delete this.connections[desc.connection.id];
             }
+            if (this.app.state.inspector.id === desc.connection.id) {
+                this.app.setState({...this.app.state,
+                    inspector: {id: null, type: null}
+                });
+            }
+
             delete desc.connection;
         }
         if (!desc.connection && (desc.srcId && desc.dstId)) {

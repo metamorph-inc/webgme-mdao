@@ -1,20 +1,20 @@
 var debug = process.env.NODE_ENV !== "production";
 var webpack = require('webpack');
 const path = require('path');
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 
 module.exports = {
   context: __dirname + '/src/visualizers',
-  devtool: debug ? "inline-sourcemap" : null,
+  devtool: debug ? "inline-sourcemap" : "source-map",
   entry: "./panels/Dataflow/DataflowPanelEntry.js",
   output: {
     path: __dirname + "/src",
     filename: "./visualizers/panels/Dataflow/DataflowPanel.js",
 	libraryTarget: "amd",
+    //sourceMapFilename: 'DataflowPanel.map',
   },
   plugins: debug ? [] : [
-    new webpack.optimize.DedupePlugin(),
-    new webpack.optimize.OccurenceOrderPlugin(),
-    new webpack.optimize.UglifyJsPlugin({ mangle: false, sourcemap: false }),
+    new UglifyJsPlugin({ mangle: true, sourceMap: true }),
   ],
 
 module: {

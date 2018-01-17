@@ -26,6 +26,7 @@ define([
 
         // Initialize core collections and variables
         this._widget = options.widget;
+        this._widget.client = options.client;
 
         this._currentNodeId = null;
         this._currentNodeParentId = undefined;
@@ -95,6 +96,7 @@ define([
             const base = this._client.getAllMetaNodes().find((meta) => meta._id == node.getBaseTypeId());
             objDescriptor = {
                 id: node.getId(),
+                node: node,
                 name: node.getAttribute(nodePropertyNames.Attributes.name),
                 childrenIds: node.getChildrenIds(),
                 // FIXME getBaseTypeId or getBaseId ?
@@ -105,6 +107,7 @@ define([
                 dstId: node.getOwnPointerId("dst"),
                 wrapper: node.getAttribute("package"),
                 typeAttribute: node.getAttribute("type"),
+                position: node.getRegistry("dataflow_position"),
             };
         }
 
